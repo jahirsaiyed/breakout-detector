@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .success {
+            background: #e6ffe6;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .signal {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .metric strong {
+            color: #333;
+        }
+
+        .metric span {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Breakout Detector</h1>
+            <p>Advanced stock market breakout detection and analysis tool</p>
+        </div>
+
+        <div class="content">
+            <!-- Stock Analysis Section -->
+            <div class="section">
+                <h2>📊 Stock Analysis</h2>
+                <div class="form-group">
+                    <label for="symbol">Stock Symbol:</label>
+                    <input type="text" id="symbol" placeholder="e.g., AAPL, SHILCTEC, RELIANCE" value="AAPL">
+                </div>
+                <div class="form-group">
+                    <label for="source">Data Source:</label>
+                    <select id="source">
+                        <option value="yahoo">Yahoo Finance</option>
+                        <option value="alphavantage">Alpha Vantage</option>
+                        <option value="nse">NSE India</option>
+                        <option value="screener">Screener.in</option>
+                        <option value="stockanalysis">StockAnalysis.com</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="detectBreakouts()">🔍 Detect Breakouts</button>
+                <div id="analysisResult"></div>
+            </div>
+
+            <!-- Signal Filtering Section -->
+            <div class="section">
+                <h2>🎯 Signal Filtering</h2>
+                <div class="form-group">
+                    <label for="filterSymbol">Stock Symbol:</label>
+                    <input type="text" id="filterSymbol" placeholder="e.g., AAPL" value="AAPL">
+                </div>
+                <div class="form-group">
+                    <label for="minVolumeRatio">Minimum Volume Ratio:</label>
+                    <input type="number" id="minVolumeRatio" placeholder="2.0" value="2.0" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="signalType">Signal Type:</label>
+                    <select id="signalType">
+                        <option value="">All Types</option>
+                        <option value="VOLUME_BREAKOUT">Volume Breakout</option>
+                        <option value="VOLUME_BREAKOUT_BULLISH">Bullish Volume Breakout</option>
+                        <option value="VOLUME_BREAKOUT_BEARISH">Bearish Volume Breakout</option>
+                        <option value="VOLUME_CLIMAX">Volume Climax</option>
+                        <option value="PRICE_BREAKOUT">Price Breakout</option>
+                        <option value="PRICE_RANGE_BREAKOUT">Price Range Breakout</option>
+                        <option value="PRICE_RANGE_BREAKDOWN">Price Range Breakdown</option>
+                        <option value="TRENDLINE_RESISTANCE_BREAKOUT">Trend Line Resistance Breakout</option>
+                        <option value="TRENDLINE_SUPPORT_BREAKDOWN">Trend Line Support Breakdown</option>
+                        <option value="RSI_DIVERGENCE">RSI Divergence</option>
+                        <option value="BOLLINGER_BREAKOUT">Bollinger Band Breakout</option>
+                        <option value="MACD_CROSSOVER">MACD Crossover</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="filterSignals()">🔍 Filter Signals</button>
+                <div id="filterResult"></div>
+            </div>
+
+            <!-- Backtesting Section -->
+            <div class="section">
+                <h2>🧪 Strategy Backtesting</h2>
+                <div class="form-group">
+                    <label for="backtestSymbol">Stock Symbol:</label>
+                    <input type="text" id="backtestSymbol" placeholder="e.g., AAPL" value="AAPL">
+                </div>
+                <div class="form-group">
+                    <label for="backtestSource">Data Source:</label>
+                    <select id="backtestSource">
+                        <option value="yahoo">Yahoo Finance</option>
+                        <option value="alphavantage">Alpha Vantage</option>
+                        <option value="nse">NSE India</option>
+                        <option value="screener">Screener.in</option>
+                        <option value="stockanalysis">StockAnalysis.com</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="backtestStrategy()">🧪 Run Backtest</button>
+                <div id="backtestResult"></div>
+            </div>
+
+            <!-- Staircase Pattern Section -->
+            <div class="section">
+                <h2>🏗️ Staircase Pattern Detection</h2>
+                <div class="form-group">
+                    <label for="staircaseSymbol">Stock Symbol:</label>
+                    <input type="text" id="staircaseSymbol" placeholder="e.g., SHILCTEC" value="SHILCTEC">
+                </div>
+                <div class="form-group">
+                    <label for="staircaseSource">Data Source:</label>
+                    <select id="staircaseSource">
+                        <option value="yahoo">Yahoo Finance</option>
+                        <option value="alphavantage">Alpha Vantage</option>
+                        <option value="nse">NSE India</option>
+                        <option value="screener">Screener.in</option>
+                        <option value="stockanalysis">StockAnalysis.com</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="detectStaircasePattern()">🏗️ Detect Staircase Pattern</button>
+                <div id="staircaseResult"></div>
+            </div>
+
+            <!-- Multibagger Score Section -->
+            <div class="section">
+                <h2>🎯 Multibagger Score</h2>
+                <div class="form-group">
+                    <label for="scoreSymbol">Stock Symbol:</label>
+                    <input type="text" id="scoreSymbol" placeholder="e.g., SHILCTEC" value="SHILCTEC">
+                </div>
+                <div class="form-group">
+                    <label for="scoreSource">Data Source:</label>
+                    <select id="scoreSource">
+                        <option value="yahoo">Yahoo Finance</option>
+                        <option value="alphavantage">Alpha Vantage</option>
+                        <option value="nse">NSE India</option>
+                        <option value="screener">Screener.in</option>
+                        <option value="stockanalysis">StockAnalysis.com</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="getMultibaggerScore()">🎯 Calculate Score</button>
+                <div id="scoreResult"></div>
+            </div>
+
+            <!-- Screener Section -->
+            <div class="section">
+                <h2>🔍 Stock Screener</h2>
+                <div class="form-group">
+                    <label for="screenerQuery">Select Query:</label>
+                    <select id="screenerQuery">
+                        <option value="">Select a screener query...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="screenerSource">Data Source:</label>
+                    <select id="screenerSource">
+                        <option value="stockanalysis">StockAnalysis.com</option>
+                        <option value="screener">Screener.in</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="executeScreenerQuery()">🔍 Execute Query</button>
+                <button class="btn" onclick="getScreenerDashboard()">📊 Screener Dashboard</button>
+                <div id="screenerResult"></div>
+            </div>
+
+            <!-- Screener Filter Section -->
+            <div class="section">
+                <h2>🎯 Filter Screener Results</h2>
+                <div class="form-group">
+                    <label for="minPrice">Min Price:</label>
+                    <input type="number" id="minPrice" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="maxPrice">Max Price:</label>
+                    <input type="number" id="maxPrice" placeholder="1000">
+                </div>
+                <div class="form-group">
+                    <label for="minChangePercent">Min Change %:</label>
+                    <input type="number" id="minChangePercent" placeholder="-10">
+                </div>
+                <div class="form-group">
+                    <label for="maxPeRatio">Max PE Ratio:</label>
+                    <input type="number" id="maxPeRatio" placeholder="30">
+                </div>
+                <div class="form-group">
+                    <label for="minRoe">Min ROE %:</label>
+                    <input type="number" id="minRoe" placeholder="10">
+                </div>
+                <button class="btn" onclick="filterScreenerResults()">🎯 Apply Filters</button>
+                <div id="filterResult"></div>
+            </div>
+
+            <!-- Data Comparison Section -->
+            <div class="section">
+                <h2>📈 Data Source Comparison</h2>
+                <div class="form-group">
+                    <label for="compareSymbol">Stock Symbol:</label>
+                    <input type="text" id="compareSymbol" placeholder="e.g., AAPL" value="AAPL">
+                </div>
+                <button class="btn" onclick="compareDataSources()">📊 Compare Sources</button>
+                <div id="compareResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/breakout-detector/api/breakout';
+
+        async function detectBreakouts() {
+            const symbol = document.getElementById('symbol').value;
+            const source = document.getElementById('source').value;
+            const resultDiv = document.getElementById('analysisResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Detecting breakouts...');
+
+            try {
+                const response = await fetch(`${API_BASE}/detect/${symbol}?source=${source}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showBreakoutResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to detect breakouts');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        async function filterSignals() {
+            const symbol = document.getElementById('filterSymbol').value;
+            const minVolumeRatio = document.getElementById('minVolumeRatio').value;
+            const signalType = document.getElementById('signalType').value;
+            const resultDiv = document.getElementById('filterResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Filtering signals...');
+
+            try {
+                const filters = {};
+                if (minVolumeRatio) filters.minVolumeRatio = parseFloat(minVolumeRatio);
+                if (signalType) filters.signalType = signalType;
+
+                const response = await fetch(`${API_BASE}/filter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        source: 'yahoo',
+                        filters: filters
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showFilterResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to filter signals');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        async function backtestStrategy() {
+            const symbol = document.getElementById('backtestSymbol').value;
+            const source = document.getElementById('backtestSource').value;
+            const resultDiv = document.getElementById('backtestResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Running backtest...');
+
+            try {
+                const response = await fetch(`${API_BASE}/backtest`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        source: source
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showBacktestResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to run backtest');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        async function compareDataSources() {
+            const symbol = document.getElementById('compareSymbol').value;
+            const resultDiv = document.getElementById('compareResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Comparing data sources...');
+
+            try {
+                const response = await fetch(`${API_BASE}/compare/${symbol}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showComparisonResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to compare data sources');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        function showBreakoutResults(div, data) {
+            div.innerHTML = `
+                <div class="success">
+                    <h3>📊 Breakout Analysis Results</h3>
+                    <div class="metric">
+                        <strong>Symbol:</strong> <span>${data.symbol}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Total Signals:</strong> <span>${data.totalSignals}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Data Points:</strong> <span>${data.dataPoints}</span>
+                    </div>
+                    ${data.signals && data.signals.length > 0 ? `
+                        <h4>Detected Signals:</h4>
+                        ${data.signals.map(signal => `
+                            <div class="signal">
+                                <div class="metric">
+                                    <strong>Type:</strong> <span>${signal.signalType}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Date:</strong> <span>${new Date(signal.signalDate).toLocaleDateString()}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Price:</strong> <span>$${signal.breakoutPrice}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Volume Ratio:</strong> <span>${signal.volumeRatio}x</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Analysis:</strong> <span>${signal.analysis}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    ` : '<p>No breakout signals detected for this stock.</p>'}
+                </div>
+            `;
+        }
+
+        function showFilterResults(div, data) {
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🎯 Filtered Signals</h3>
+                    <div class="metric">
+                        <strong>Symbol:</strong> <span>${data.symbol}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Total Signals:</strong> <span>${data.totalSignals}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Filtered Signals:</strong> <span>${data.filteredSignals}</span>
+                    </div>
+                    ${data.signals && data.signals.length > 0 ? `
+                        <h4>Filtered Results:</h4>
+                        ${data.signals.map(signal => `
+                            <div class="signal">
+                                <div class="metric">
+                                    <strong>Type:</strong> <span>${signal.signalType}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Date:</strong> <span>${new Date(signal.signalDate).toLocaleDateString()}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Price:</strong> <span>$${signal.breakoutPrice}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Volume Ratio:</strong> <span>${signal.volumeRatio}x</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    ` : '<p>No signals match the filter criteria.</p>'}
+                </div>
+            `;
+        }
+
+        function showBacktestResults(div, data) {
+            const result = data.backtestResult;
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🧪 Backtest Results</h3>
+                    <div class="grid">
+                        <div class="card">
+                            <h4>📈 Performance</h4>
+                            <div class="metric">
+                                <strong>Total Return:</strong> <span>$${result.totalReturn?.toFixed(2)}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Return %:</strong> <span>${result.totalReturnPercent?.toFixed(2)}%</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Win Rate:</strong> <span>${result.winRate?.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h4>📊 Trading Stats</h4>
+                            <div class="metric">
+                                <strong>Total Trades:</strong> <span>${result.totalTrades}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Winning Trades:</strong> <span>${result.winningTrades}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Losing Trades:</strong> <span>${result.losingTrades}</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h4>⚖️ Risk Metrics</h4>
+                            <div class="metric">
+                                <strong>Sharpe Ratio:</strong> <span>${result.sharpeRatio?.toFixed(2)}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Max Drawdown:</strong> <span>$${result.maxDrawdown?.toFixed(2)}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Profit Factor:</strong> <span>${result.profitFactor?.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showComparisonResults(div, data) {
+            div.innerHTML = `
+                <div class="success">
+                    <h3>📈 Data Source Comparison</h3>
+                    <div class="metric">
+                        <strong>Symbol:</strong> <span>${data.symbol}</span>
+                    </div>
+                    <div class="grid">
+                        ${Object.entries(data).filter(([key]) => key !== 'symbol').map(([source, info]) => `
+                            <div class="card">
+                                <h4>${source.toUpperCase()}</h4>
+                                ${info.error ? `
+                                    <div class="error">${info.error}</div>
+                                ` : `
+                                    <div class="metric">
+                                        <strong>Data Points:</strong> <span>${info.dataPoints}</span>
+                                    </div>
+                                    <div class="metric">
+                                        <strong>Latest Price:</strong> <span>$${info.latestPrice}</span>
+                                    </div>
+                                    <div class="metric">
+                                        <strong>Date Range:</strong> <span>${new Date(info.firstDate).toLocaleDateString()} - ${new Date(info.lastDate).toLocaleDateString()}</span>
+                                    </div>
+                                `}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showLoading(div, message) {
+            div.innerHTML = `<div class="loading">⏳ ${message}</div>`;
+        }
+
+        async function detectStaircasePattern() {
+            const symbol = document.getElementById('staircaseSymbol').value;
+            const source = document.getElementById('staircaseSource').value;
+            const resultDiv = document.getElementById('staircaseResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Detecting staircase pattern...');
+
+            try {
+                const response = await fetch(`${API_BASE}/staircase/${symbol}?source=${source}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showStaircaseResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to detect staircase pattern');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        async function getMultibaggerScore() {
+            const symbol = document.getElementById('scoreSymbol').value;
+            const source = document.getElementById('scoreSource').value;
+            const resultDiv = document.getElementById('scoreResult');
+
+            if (!symbol) {
+                showError(resultDiv, 'Please enter a stock symbol');
+                return;
+            }
+
+            showLoading(resultDiv, 'Calculating multibagger score...');
+
+            try {
+                const response = await fetch(`${API_BASE}/multibagger-score/${symbol}?source=${source}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showScoreResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to calculate multibagger score');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        function showStaircaseResults(div, data) {
+            const dashboard = data.dashboard;
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🏗️ Staircase Pattern Analysis</h3>
+                    <div class="metric">
+                        <strong>Symbol:</strong> <span>${data.symbol}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Has Staircase Pattern:</strong> <span>${dashboard.hasStaircasePattern ? '✅ Yes' : '❌ No'}</span>
+                    </div>
+                    ${dashboard.hasStaircasePattern ? `
+                        <div class="grid">
+                            <div class="card">
+                                <h4>📊 Pattern Statistics</h4>
+                                <div class="metric">
+                                    <strong>Pattern Strength:</strong> <span>${dashboard.patternStrength}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Total Breakouts:</strong> <span>${dashboard.totalBreakouts}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Total Breakdowns:</strong> <span>${dashboard.totalBreakdowns}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Price Increase:</strong> <span>${dashboard.totalPriceIncrease?.toFixed(2)}%</span>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <h4>📈 Signal Analysis</h4>
+                                <div class="metric">
+                                    <strong>Total Signals:</strong> <span>${dashboard.totalSignals}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Recent Signals (30d):</strong> <span>${dashboard.recentSignals}</span>
+                                </div>
+                                ${dashboard.signalTypeCounts ? `
+                                    <h5>Signal Types:</h5>
+                                    ${Object.entries(dashboard.signalTypeCounts).map(([type, count]) => `
+                                        <div class="metric">
+                                            <strong>${type}:</strong> <span>${count}</span>
+                                        </div>
+                                    `).join('')}
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="analysis">
+                            <h4>📝 Analysis:</h4>
+                            <p>${dashboard.analysis}</p>
+                        </div>
+                    ` : `
+                        <div class="analysis">
+                            <h4>📝 Analysis:</h4>
+                            <p>${dashboard.analysis}</p>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function showScoreResults(div, data) {
+            const scoreLevel = data.scoreLevel;
+            const scoreColor = getScoreColor(scoreLevel);
+            
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🎯 Multibagger Score Analysis</h3>
+                    <div class="metric">
+                        <strong>Symbol:</strong> <span>${data.symbol}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Multibagger Score:</strong> <span style="color: ${scoreColor}; font-weight: bold;">${data.multibaggerScore}/100</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Score Level:</strong> <span style="color: ${scoreColor}; font-weight: bold;">${scoreLevel}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Has Staircase Pattern:</strong> <span>${data.hasStaircasePattern ? '✅ Yes' : '❌ No'}</span>
+                    </div>
+                    ${data.pattern ? `
+                        <div class="grid">
+                            <div class="card">
+                                <h4>🏗️ Pattern Details</h4>
+                                <div class="metric">
+                                    <strong>Pattern Strength:</strong> <span>${data.pattern.patternStrength}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Total Breakouts:</strong> <span>${data.pattern.totalBreakouts}</span>
+                                </div>
+                                <div class="metric">
+                                    <strong>Price Increase:</strong> <span>${data.pattern.totalPriceIncrease?.toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <div class="analysis">
+                        <h4>💡 Recommendation:</h4>
+                        <p>${getScoreRecommendation(scoreLevel)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getScoreColor(scoreLevel) {
+            switch (scoreLevel) {
+                case 'VERY_HIGH': return '#00b894';
+                case 'HIGH': return '#00cec9';
+                case 'MEDIUM': return '#fdcb6e';
+                case 'LOW': return '#e17055';
+                case 'VERY_LOW': return '#d63031';
+                default: return '#636e72';
+            }
+        }
+
+        function getScoreRecommendation(scoreLevel) {
+            switch (scoreLevel) {
+                case 'VERY_HIGH': return '🚀 Excellent multibagger potential! This stock shows strong early-stage characteristics with multiple breakouts and progressive price action.';
+                case 'HIGH': return '📈 Good multibagger potential with clear breakout patterns and positive momentum.';
+                case 'MEDIUM': return '📊 Moderate potential with some breakout activity. Monitor for additional signals.';
+                case 'LOW': return '⚠️ Limited multibagger potential. Need more breakout signals or better pattern formation.';
+                case 'VERY_LOW': return '❌ Low multibagger potential. Consider other stocks or wait for better signals.';
+                default: return '📋 Insufficient data to determine potential.';
+            }
+        }
+
+        // Load screener queries on page load
+        window.addEventListener('load', function() {
+            loadScreenerQueries();
+        });
+
+        async function loadScreenerQueries() {
+            try {
+                const response = await fetch(`${API_BASE}/screener/queries`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('screenerQuery');
+                    select.innerHTML = '<option value="">Select a screener query...</option>';
+                    
+                    data.queries.forEach(query => {
+                        const option = document.createElement('option');
+                        option.value = query.name;
+                        option.textContent = `${query.name} (${query.source})`;
+                        option.title = query.description;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load screener queries:', error);
+            }
+        }
+
+        async function executeScreenerQuery() {
+            const queryName = document.getElementById('screenerQuery').value;
+            const source = document.getElementById('screenerSource').value;
+            const resultDiv = document.getElementById('screenerResult');
+
+            if (!queryName) {
+                showError(resultDiv, 'Please select a screener query');
+                return;
+            }
+
+            showLoading(resultDiv, 'Executing screener query...');
+
+            try {
+                const response = await fetch(`${API_BASE}/screener/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        queryName: queryName,
+                        source: source
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    showScreenerResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to execute screener query');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        async function getScreenerDashboard() {
+            const resultDiv = document.getElementById('screenerResult');
+            showLoading(resultDiv, 'Loading screener dashboard...');
+
+            try {
+                const response = await fetch(`${API_BASE}/screener/dashboard`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    showScreenerDashboard(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to load screener dashboard');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        function showScreenerResults(div, data) {
+            const query = data.query;
+            const stocks = data.stocks;
+            
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🔍 Screener Results</h3>
+                    <div class="metric">
+                        <strong>Query:</strong> <span>${query.name}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Source:</strong> <span>${query.source}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Description:</strong> <span>${query.description}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Total Results:</strong> <span>${data.totalResults}</span>
+                    </div>
+                    
+                    <h4>📊 Stocks Found:</h4>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Change %</th>
+                                    <th>Volume</th>
+                                    <th>PE Ratio</th>
+                                    <th>ROE %</th>
+                                    <th>Market Cap</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stocks.map(stock => `
+                                    <tr>
+                                        <td><strong>${stock.symbol}</strong></td>
+                                        <td>${stock.name}</td>
+                                        <td>$${stock.price.toFixed(2)}</td>
+                                        <td style="color: ${stock.changePercent >= 0 ? 'green' : 'red'}">
+                                            ${stock.changePercent >= 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%
+                                        </td>
+                                        <td>${formatNumber(stock.volume)}</td>
+                                        <td>${stock.peRatio.toFixed(2)}</td>
+                                        <td>${stock.roe.toFixed(2)}%</td>
+                                        <td>$${formatNumber(stock.marketCap)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showScreenerDashboard(div, data) {
+            div.innerHTML = `
+                <div class="success">
+                    <h3>📊 Screener Dashboard</h3>
+                    <div class="grid">
+                        <div class="card">
+                            <h4>📈 Overview</h4>
+                            <div class="metric">
+                                <strong>Total Queries:</strong> <span>${data.totalQueries}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Successful Queries:</strong> <span>${data.successfulQueries}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Total Stocks:</strong> <span>${data.totalStocks}</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h4>📊 Averages</h4>
+                            <div class="metric">
+                                <strong>Avg Price:</strong> <span>$${data.avgPrice.toFixed(2)}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Avg Change %:</strong> <span>${data.avgChangePercent.toFixed(2)}%</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Avg PE Ratio:</strong> <span>${data.avgPeRatio.toFixed(2)}</span>
+                            </div>
+                            <div class="metric">
+                                <strong>Avg ROE %:</strong> <span>${data.avgRoe.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4>🔍 Query Results:</h4>
+                    ${data.queryResults.map((result, index) => `
+                        <div class="query-result">
+                            <h5>${result.query.name} (${result.query.source})</h5>
+                            <div class="metric">
+                                <strong>Status:</strong> <span>${result.success ? '✅ Success' : '❌ Failed'}</span>
+                            </div>
+                            ${result.success ? `
+                                <div class="metric">
+                                    <strong>Results:</strong> <span>${result.totalResults} stocks</span>
+                                </div>
+                                <div class="table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Symbol</th>
+                                                <th>Name</th>
+                                                <th>Price</th>
+                                                <th>Change %</th>
+                                                <th>PE Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${result.stocks.slice(0, 5).map(stock => `
+                                                <tr>
+                                                    <td><strong>${stock.symbol}</strong></td>
+                                                    <td>${stock.name}</td>
+                                                    <td>$${stock.price.toFixed(2)}</td>
+                                                    <td style="color: ${stock.changePercent >= 0 ? 'green' : 'red'}">
+                                                        ${stock.changePercent >= 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%
+                                                    </td>
+                                                    <td>${stock.peRatio.toFixed(2)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div class="error">${result.error}</div>
+                            `}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function filterScreenerResults() {
+            const minPrice = document.getElementById('minPrice').value;
+            const maxPrice = document.getElementById('maxPrice').value;
+            const minChangePercent = document.getElementById('minChangePercent').value;
+            const maxPeRatio = document.getElementById('maxPeRatio').value;
+            const minRoe = document.getElementById('minRoe').value;
+            const resultDiv = document.getElementById('filterResult');
+
+            // Get current screener results (this would need to be stored from previous query)
+            const currentStocks = window.currentScreenerStocks || [];
+            
+            if (currentStocks.length === 0) {
+                showError(resultDiv, 'No screener results to filter. Please execute a screener query first.');
+                return;
+            }
+
+            const filters = {};
+            if (minPrice) filters.minPrice = parseFloat(minPrice);
+            if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
+            if (minChangePercent) filters.minChangePercent = parseFloat(minChangePercent);
+            if (maxPeRatio) filters.maxPeRatio = parseFloat(maxPeRatio);
+            if (minRoe) filters.minRoe = parseFloat(minRoe);
+
+            showLoading(resultDiv, 'Applying filters...');
+
+            try {
+                const response = await fetch(`${API_BASE}/screener/filter`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stocks: currentStocks,
+                        filters: filters
+                    })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    showFilterResults(resultDiv, data);
+                } else {
+                    showError(resultDiv, data.error || 'Failed to filter results');
+                }
+            } catch (error) {
+                showError(resultDiv, 'Network error: ' + error.message);
+            }
+        }
+
+        function showFilterResults(div, data) {
+            const filteredStocks = data.filteredStocks;
+            
+            div.innerHTML = `
+                <div class="success">
+                    <h3>🎯 Filter Results</h3>
+                    <div class="metric">
+                        <strong>Original Count:</strong> <span>${data.originalCount}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Filtered Count:</strong> <span>${data.totalFiltered}</span>
+                    </div>
+                    <div class="metric">
+                        <strong>Filters Applied:</strong> <span>${Object.keys(data.filters).join(', ')}</span>
+                    </div>
+                    
+                    <h4>📊 Filtered Stocks:</h4>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Change %</th>
+                                    <th>PE Ratio</th>
+                                    <th>ROE %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredStocks.map(stock => `
+                                    <tr>
+                                        <td><strong>${stock.symbol}</strong></td>
+                                        <td>${stock.name}</td>
+                                        <td>$${stock.price.toFixed(2)}</td>
+                                        <td style="color: ${stock.changePercent >= 0 ? 'green' : 'red'}">
+                                            ${stock.changePercent >= 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%
+                                        </td>
+                                        <td>${stock.peRatio.toFixed(2)}</td>
+                                        <td>${stock.roe.toFixed(2)}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1e9) {
+                return (num / 1e9).toFixed(2) + 'B';
+            } else if (num >= 1e6) {
+                return (num / 1e6).toFixed(2) + 'M';
+            } else if (num >= 1e3) {
+                return (num / 1e3).toFixed(2) + 'K';
+            }
+            return num.toFixed(0);
+        }
+
+        function showError(div, message) {
+            div.innerHTML = `<div class="error">❌ ${message}</div>`;
+        }
+    </script>
+</body>
+</html> 

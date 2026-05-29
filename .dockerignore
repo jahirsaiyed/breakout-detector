@@ -1,0 +1,8 @@
+target/
+data/
+research-cache/
+research-output/
+frontend/
+.idea/
+*.iml
+.git/

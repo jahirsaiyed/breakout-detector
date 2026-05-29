@@ -1,0 +1,113 @@
+:root {
+  /* dark "terminal luxe" fintech direction — intentional, not a default template */
+  --bg: oklch(16% 0.02 250);
+  --bg-elev: oklch(21% 0.025 255);
+  --bg-card: oklch(24% 0.028 258);
+  --line: oklch(32% 0.03 258);
+  --text: oklch(95% 0.01 250);
+  --text-dim: oklch(72% 0.02 255);
+  --text-faint: oklch(58% 0.02 255);
+  --accent: oklch(78% 0.17 145);     /* signal green */
+  --accent-2: oklch(72% 0.15 250);   /* electric blue */
+  --warn: oklch(72% 0.17 55);
+  --radius: 14px;
+  --maxw: 1160px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, oklch(28% 0.06 160 / 0.35), transparent 60%),
+    radial-gradient(900px 500px at -5% 5%, oklch(26% 0.06 260 / 0.30), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+a { color: inherit; }
+
+/* top bar */
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.02em; }
+.brand .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 14px var(--accent); }
+.nav .pill { font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+  border: 1px solid var(--line); padding: 6px 11px; border-radius: 999px; }
+
+/* hero */
+.hero { padding: 56px 0 30px; }
+.hero h1 {
+  font-size: clamp(2.4rem, 1.2rem + 4.5vw, 5rem);
+  line-height: 0.98; letter-spacing: -0.035em; font-weight: 800; max-width: 16ch;
+}
+.hero h1 .g { background: linear-gradient(100deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p { margin-top: 20px; max-width: 56ch; color: var(--text-dim); font-size: 1.12rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 30px; }
+.stat .n { font-family: var(--mono); font-size: 1.7rem; font-weight: 700; color: var(--text); }
+.stat .n .accent { color: var(--accent); }
+.stat .l { font-size: 0.82rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* section heading */
+.sec { margin-top: 54px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.sec h2 { font-size: 1.5rem; letter-spacing: -0.02em; }
+.sec .meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+
+/* candidate grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; margin-top: 20px; }
+.card {
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 16px;
+  position: relative; overflow: hidden; transition: transform .18s ease, border-color .18s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: oklch(45% 0.06 160); }
+.card.rec { border-color: oklch(50% 0.12 145); }
+.card .rowtop { display: flex; align-items: center; justify-content: space-between; }
+.sym { font-family: var(--mono); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+.badges { display: flex; gap: 6px; }
+.badge { font-size: 10px; font-family: var(--mono); padding: 3px 7px; border-radius: 6px;
+  border: 1px solid var(--line); color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
+.badge.us { color: var(--accent-2); border-color: oklch(45% 0.08 250); }
+.badge.in { color: var(--warn); border-color: oklch(45% 0.1 60); }
+.badge.rec { color: var(--accent); border-color: oklch(50% 0.12 145); background: oklch(30% 0.06 150 / .5); }
+
+.price { margin-top: 10px; font-family: var(--mono); font-size: 1.05rem; }
+.price .since { color: var(--text-faint); font-size: 12px; margin-left: 8px; }
+
+.conv { margin-top: 14px; }
+.conv .lab { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.bar { height: 7px; border-radius: 999px; background: oklch(30% 0.02 258); overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent)); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.chip { font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+  background: oklch(28% 0.02 258); border: 1px solid var(--line); padding: 4px 8px; border-radius: 7px; }
+.chip b { color: var(--text); font-weight: 600; }
+
+/* "why" strip */
+.why { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px; }
+.why .f { background: var(--bg-elev); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.why .f h4 { font-family: var(--mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; }
+.why .f p { font-size: 13px; color: var(--text-dim); }
+
+/* states */
+.note { margin-top: 20px; padding: 16px 18px; border-radius: 12px; border: 1px dashed var(--line);
+  color: var(--text-dim); font-size: 14px; background: oklch(22% 0.02 258 / .5); }
+
+/* disclaimer / footer */
+.disc { margin: 60px 0 40px; padding: 18px 20px; border-radius: 12px;
+  border: 1px solid oklch(40% 0.09 60); background: oklch(26% 0.05 60 / .25);
+  color: var(--text-dim); font-size: 13px; }
+.disc b { color: var(--warn); }
+footer { border-top: 1px solid var(--line); padding: 26px 0 60px; color: var(--text-faint); font-size: 13px; }
+.skel { height: 168px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: linear-gradient(100deg, var(--bg-elev), var(--bg-card), var(--bg-elev));
+  background-size: 200% 100%; animation: sh 1.3s infinite; }
+@keyframes sh { to { background-position: -200% 0; } }

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python -c ' *)",
+      "Bash(cd \"D:/Garage/BreakoutDetector\")",
+      "Bash(date +%s)",
+      "Bash(curl -s -m 30 -A Mozilla/5.0 'https://query1.finance.yahoo.com/v8/finance/chart/__TRACKED_VAR__?period1=0&period2=__TRACKED_VAR__&interval=1wk&includeAdjustedClose=true' -o /tmp/__TRACKED_VAR__.json)",
+      "Bash(curl -s -m 30 -A Mozilla/5.0 'https://query1.finance.yahoo.com/v8/finance/chart/__TRACKED_VAR__?period1=0&period2=__TRACKED_VAR__&interval=1wk&includeAdjustedClose=true' -o research-cache/test___TRACKED_VAR__.json)",
+      "Bash(curl -s -m 30 -L \"https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv\" -o research-cache/sp500.csv)",
+      "Bash(curl -s -m 30 -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)\" -H \"Accept: text/csv\" \"https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv\" -o research-cache/nifty500.csv)"
+    ]
+  }
+}
