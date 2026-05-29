@@ -13,10 +13,11 @@ research-cache/
 *.env
 !*.env.example
 
-# IDE
+# IDE / local tooling
 .idea/
 *.iml
 *.iws
+.claude/
 
 # Node / frontend
 frontend/node_modules/
