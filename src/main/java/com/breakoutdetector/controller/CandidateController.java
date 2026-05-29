@@ -54,4 +54,17 @@ public class CandidateController {
     public ResponseEntity<List<Candidate>> history(@PathVariable String symbol) {
         return ResponseEntity.ok(repository.findBySymbolOrderByScanDateDesc(symbol));
     }
+
+    /**
+     * Full, human-readable breakdown of why a symbol did/didn't qualify — the transparency view.
+     * Works for ANY ticker, not only persisted candidates. {symbol:.+} preserves dots (e.g. RELIANCE.NS).
+     */
+    @GetMapping("/explain/{symbol:.+}")
+    public ResponseEntity<?> explain(@PathVariable String symbol) {
+        try {
+            return ResponseEntity.ok(scanService.explain(symbol.trim().toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
 }

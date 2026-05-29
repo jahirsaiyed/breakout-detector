@@ -38,9 +38,30 @@ public class LongBaseBreakoutService {
     static final double[] STD = {156.9151000071788, 4046799.816070551, 0.06379667239567466,
             1.2291291873486128, 1.1911318330887823, 1.6373141078003568};
 
+    static final String[] FEATURE_NAMES = {"baseWeeks", "volSurge", "slope", "baseDepth", "brkMargin", "mom26"};
+    static final String[] FACTOR_LABELS = {"Base length", "Volume surge", "Base flatness",
+            "Base depth", "Breakout margin (don't-chase)", "26-week momentum"};
+
     public record ScoredSignal(java.time.LocalDate date, int idx, double price, double resistance,
                                int baseWeeks, double volSurge, double breakoutMargin,
                                double momentum26w, double rankScore) {}
+
+    /** A single factor's contribution to the rank score (contribution = coef × z-score). */
+    public record FactorContribution(String feature, String label, double value,
+                                     double zScore, double contribution) {}
+
+    public double intercept() { return INTERCEPT; }
+
+    /** Per-factor breakdown of how a signal's rank score was built — the transparency payload. */
+    public List<FactorContribution> explainFactors(List<WeeklyBar> bars, ScoredSignal s) {
+        double[] x = features(bars, s.idx(), s.baseWeeks(), s.resistance());
+        List<FactorContribution> out = new ArrayList<>();
+        for (int j = 0; j < COEF.length; j++) {
+            double z = (x[j] - MEAN[j]) / STD[j];
+            out.add(new FactorContribution(FEATURE_NAMES[j], FACTOR_LABELS[j], x[j], z, COEF[j] * z));
+        }
+        return out;
+    }
 
     /** All long-base breakouts in the series (point-in-time), each scored by the fitted model. */
     public List<ScoredSignal> detect(List<WeeklyBar> b) {

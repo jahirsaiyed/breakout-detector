@@ -116,6 +116,78 @@ public class BreakoutScanService {
         return new ScanSummary(scanDate, scanned, failed, found.size());
     }
 
+    /**
+     * Full breakdown for one symbol: the latest breakout (if any), its factor contributions,
+     * the regime gate, recent context bars, and plain-English reasons.
+     */
+    public com.breakoutdetector.model.CandidateExplanation explain(String symbol) {
+        boolean isIN = symbol.endsWith(".NS");
+        String market = isIN ? "IN" : "US";
+        List<WeeklyBar> bars;
+        try {
+            bars = marketData.fetchWeekly(symbol);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("No data for symbol '" + symbol + "': " + e.getMessage());
+        }
+        if (bars.size() < LongBaseBreakoutService.MIN_BASE_WEEKS + 4) {
+            return notFired(symbol, market, "Not enough history (" + bars.size() + " weekly bars) to assess a multi-year base.");
+        }
+        List<ScoredSignal> sigs = detector.detect(bars);
+        WeeklyBar last = bars.get(bars.size() - 1);
+        if (sigs.isEmpty()) {
+            return notFired(symbol, market, symbol.replace(".NS", "")
+                    + " has not produced a multi-year base breakout in its history.");
+        }
+        ScoredSignal s = sigs.get(sigs.size() - 1);
+        List<WeeklyBar> bench = fetchQuiet(isIN ? benchmarkIn : benchmarkUs);
+        boolean regimeOn = marketData.regimeOn(bench, s.date());
+        long weeksAgo = ChronoUnit.WEEKS.between(s.date(), last.date());
+        boolean fresh = weeksAgo <= freshnessWeeks;
+        var factors = detector.explainFactors(bars, s);
+
+        String ccy = isIN ? "₹" : "$";
+        String sym = symbol.replace(".NS", "");
+        String headline = String.format(java.util.Locale.US,
+                "%s broke out above a %.1f-year base — cleared resistance %s%.2f at %s%.2f (+%.1f%%) on %.1f× volume.",
+                sym, s.baseWeeks() / 52.0, ccy, s.resistance(), ccy, s.price(), s.breakoutMargin() * 100, s.volSurge());
+
+        List<String> reasons = new ArrayList<>();
+        reasons.add(String.format(java.util.Locale.US,
+                "Based for ~%.1f years under resistance %s%.2f — a genuine multi-year consolidation.",
+                s.baseWeeks() / 52.0, ccy, s.resistance()));
+        reasons.add(String.format(java.util.Locale.US,
+                "Closed +%.1f%% above that resistance — %s.", s.breakoutMargin() * 100,
+                s.breakoutMargin() < 0.10 ? "near the line, not extended (good entry)" : "somewhat extended above the line"));
+        reasons.add(String.format(java.util.Locale.US,
+                "Breakout-week volume was %.1f× the base's typical week — real participation, not a drift.", s.volSurge()));
+        reasons.add(String.format(java.util.Locale.US,
+                "26-week momentum into the breakout: %+.1f%%.", s.momentum26w() * 100));
+        reasons.add("Market regime " + (regimeOn ? "ON" : "OFF") + ": the benchmark index is "
+                + (regimeOn ? "above" : "below") + " its 40-week trend"
+                + (regimeOn ? "." : " — breakouts in falling markets underperformed in testing and are filtered out."));
+        reasons.add("Signal is " + weeksAgo + " week(s) old — " + (fresh ? "fresh; it would be surfaced by a scan." : "older than the freshness window; not a live candidate."));
+
+        int idx = s.idx();
+        List<com.breakoutdetector.model.CandidateExplanation.ContextBar> ctx = new ArrayList<>();
+        for (int i = Math.max(0, idx - 4); i <= Math.min(bars.size() - 1, idx + 4); i++) {
+            WeeklyBar b = bars.get(i);
+            ctx.add(new com.breakoutdetector.model.CandidateExplanation.ContextBar(
+                    b.date(), b.close(), b.high(), b.volume(), i == idx));
+        }
+
+        return new com.breakoutdetector.model.CandidateExplanation(
+                symbol, market, true, s.date(), s.price(), s.resistance(), s.baseWeeks(),
+                s.baseWeeks() / 52.0, s.volSurge(), s.breakoutMargin() * 100, s.momentum26w() * 100,
+                s.rankScore(), regimeOn, fresh, weeksAgo, headline, reasons, factors, ctx);
+    }
+
+    private com.breakoutdetector.model.CandidateExplanation notFired(String symbol, String market, String reason) {
+        return new com.breakoutdetector.model.CandidateExplanation(
+                symbol, market, false, null, 0, 0, 0, 0, 0, 0, 0, 0, false, false, 0,
+                "No active long-base breakout for " + symbol.replace(".NS", "") + ".",
+                List.of(reason), List.of(), List.of());
+    }
+
     /** The most recent breakout, only if it fired within the freshness window of the latest bar. */
     private ScoredSignal latestFreshBreakout(List<WeeklyBar> bars) {
         List<ScoredSignal> sigs = detector.detect(bars);
