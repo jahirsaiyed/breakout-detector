@@ -6,9 +6,12 @@ import { API_BASE, type Candidate } from "@/lib/types";
 function pct(n: number) { return `${(n * 100).toFixed(1)}%`; }
 function years(weeks: number) { return `${(weeks / 52).toFixed(1)}y`; }
 
+type Market = "ALL" | "US" | "IN";
+
 export default function CandidateList() {
   const [data, setData] = useState<Candidate[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [market, setMarket] = useState<Market>("ALL");
 
   useEffect(() => {
     let alive = true;
@@ -42,9 +45,24 @@ export default function CandidateList() {
     );
   }
 
-  const sorted = [...data].sort((a, b) => b.rankScore - a.rankScore);
+  const sorted = [...data]
+    .filter((c) => market === "ALL" || c.market === market)
+    .sort((a, b) => b.rankScore - a.rankScore);
 
   return (
+    <>
+    <div className="filter-bar">
+      {(["ALL", "US", "IN"] as Market[]).map((m) => (
+        <button
+          key={m}
+          className={`filter-btn${market === m ? " active" : ""}`}
+          onClick={() => setMarket(m)}
+        >
+          {m === "ALL" ? "All markets" : m === "US" ? "🇺🇸 US" : "🇮🇳 India"}
+        </button>
+      ))}
+      <span className="filter-count">{sorted.length} stock{sorted.length !== 1 ? "s" : ""}</span>
+    </div>
     <div className="grid">
       {sorted.map((c) => {
         const rec = c.percentileRank >= 0.67;
@@ -81,5 +99,6 @@ export default function CandidateList() {
         );
       })}
     </div>
+    </>
   );
 }

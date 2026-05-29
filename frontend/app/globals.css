@@ -58,6 +58,18 @@ a { color: inherit; }
 .sec h2 { font-size: 1.5rem; letter-spacing: -0.02em; }
 .sec .meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
 
+/* market filter bar */
+.filter-bar { display: flex; align-items: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+.filter-btn {
+  font-family: var(--mono); font-size: 12px; cursor: pointer;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--text-dim);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.filter-btn:hover { border-color: oklch(50% 0.06 250); color: var(--text); }
+.filter-btn.active { border-color: var(--accent-2); color: var(--accent-2); background: oklch(26% 0.06 250 / .35); }
+.filter-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+
 /* candidate grid */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; margin-top: 20px; }
 .card {
