@@ -1,6 +1,7 @@
 package com.breakoutdetector.service;
 
 import com.breakoutdetector.model.WeeklyBar;
+import com.breakoutdetector.service.LongBaseBreakoutService.FactorContribution;
 import com.breakoutdetector.service.LongBaseBreakoutService.ScoredSignal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class LongBaseBreakoutServiceTest {
 
@@ -64,5 +66,24 @@ class LongBaseBreakoutServiceTest {
             bars.add(new WeeklyBar(d.plusWeeks(i), c, c + 1, c - 1, c, 1_000_000));
         }
         assertThat(service.detect(bars)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("factor contributions + intercept reconstruct the rank score exactly")
+    void contributionsSumToScore() {
+        List<ScoredSignal> signals = service.detect(baseThenBreakout());
+        assertThat(signals).hasSize(1);
+        ScoredSignal s = signals.get(0);
+
+        List<FactorContribution> factors = service.explainFactors(baseThenBreakout(), s);
+        assertThat(factors).hasSize(6);
+        assertThat(factors).extracting(FactorContribution::label)
+                .containsExactly("Base length", "Volume surge", "Base flatness",
+                        "Base depth", "Breakout margin (don't-chase)", "26-week momentum");
+
+        double reconstructed = service.intercept()
+                + factors.stream().mapToDouble(FactorContribution::contribution).sum();
+        // the score is a transparent linear model: intercept + sum(coef * z) == rankScore
+        assertThat(reconstructed).isEqualTo(s.rankScore(), within(1e-9));
     }
 }
