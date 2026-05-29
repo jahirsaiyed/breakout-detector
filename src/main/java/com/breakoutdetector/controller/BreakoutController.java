@@ -7,6 +7,13 @@ import com.breakoutdetector.service.BreakoutDetectionService;
 import com.breakoutdetector.service.DataFetchingService;
 import com.breakoutdetector.service.StaircasePatternService;
 import com.breakoutdetector.service.ScreenerService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +28,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/breakout")
 @CrossOrigin(origins = "*")
+@Tag(name = "Breakout Detector", description = "Stock breakout detection, staircase pattern analysis, backtesting, and screening")
 public class BreakoutController {
 
     @Autowired
@@ -38,13 +46,16 @@ public class BreakoutController {
     @Autowired
     private ScreenerService screenerService;
 
-    /**
-     * Detect breakouts for a specific stock
-     */
+    @Operation(summary = "Detect breakouts", description = "Detect breakout signals for a specific stock symbol")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Breakout signals returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/detect/{symbol}")
     public ResponseEntity<Map<String, Object>> detectBreakouts(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "yahoo") String source) {
+            @Parameter(description = "Stock ticker symbol (e.g. AAPL, NVDA)", required = true) @PathVariable String symbol,
+            @Parameter(description = "Data source: yahoo, alphavantage, nse, screener, stockanalysis") @RequestParam(defaultValue = "yahoo") String source) {
         
         try {
             // Fetch stock data
@@ -71,11 +82,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Filter breakout signals based on criteria
-     */
+    @Operation(summary = "Filter breakout signals", description = "Fetch breakouts for a symbol and apply filter criteria")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Filtered signals returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/filter")
     public ResponseEntity<Map<String, Object>> filterSignals(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "symbol, source (optional), filters (optional map)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -110,11 +125,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Backtest breakout strategy
-     */
+    @Operation(summary = "Backtest strategy", description = "Run a backtest on detected breakout signals for a symbol")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Backtest result returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/backtest")
     public ResponseEntity<Map<String, Object>> backtestStrategy(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "symbol, source (optional), filters (optional map)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -154,13 +173,16 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Get stock data for analysis
-     */
+    @Operation(summary = "Get stock data", description = "Fetch raw OHLCV data for a symbol from the specified source")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Stock data returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/data/{symbol}")
     public ResponseEntity<Map<String, Object>> getStockData(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "yahoo") String source) {
+            @Parameter(description = "Stock ticker symbol", required = true) @PathVariable String symbol,
+            @Parameter(description = "Data source") @RequestParam(defaultValue = "yahoo") String source) {
         
         try {
             List<StockData> stockDataList = dataFetchingService.fetchStockData(symbol, source);
@@ -182,11 +204,14 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Compare multiple data sources
-     */
+    @Operation(summary = "Compare data sources", description = "Compare stock data availability and latest price across all supported data sources")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Comparison result returned"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/compare/{symbol}")
-    public ResponseEntity<Map<String, Object>> compareDataSources(@PathVariable String symbol) {
+    public ResponseEntity<Map<String, Object>> compareDataSources(
+            @Parameter(description = "Stock ticker symbol", required = true) @PathVariable String symbol) {
         
         try {
             Map<String, Object> response = new HashMap<>();
@@ -218,9 +243,8 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Get available data sources
-     */
+    @Operation(summary = "List data sources", description = "Returns all supported data sources and their descriptions")
+    @ApiResponse(responseCode = "200", description = "Data sources returned")
     @GetMapping("/sources")
     public ResponseEntity<Map<String, Object>> getDataSources() {
         Map<String, Object> sources = Map.of(
@@ -234,13 +258,16 @@ public class BreakoutController {
         return ResponseEntity.ok(Map.of("sources", sources));
     }
 
-    /**
-     * Detect staircase patterns for multibagger identification
-     */
+    @Operation(summary = "Detect staircase pattern", description = "Detect staircase breakout patterns for multibagger identification")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Staircase dashboard returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/staircase/{symbol}")
     public ResponseEntity<Map<String, Object>> detectStaircasePattern(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "yahoo") String source) {
+            @Parameter(description = "Stock ticker symbol", required = true) @PathVariable String symbol,
+            @Parameter(description = "Data source") @RequestParam(defaultValue = "yahoo") String source) {
         
         try {
             // Fetch stock data
@@ -269,13 +296,16 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Get multibagger score for a stock
-     */
+    @Operation(summary = "Get multibagger score", description = "Calculate the multibagger probability score for a stock")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Multibagger score returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid or insufficient stock data"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/multibagger-score/{symbol}")
     public ResponseEntity<Map<String, Object>> getMultibaggerScore(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "yahoo") String source) {
+            @Parameter(description = "Stock ticker symbol", required = true) @PathVariable String symbol,
+            @Parameter(description = "Data source") @RequestParam(defaultValue = "yahoo") String source) {
         
         try {
             // Fetch stock data
@@ -299,11 +329,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Find stocks with staircase patterns (for screening)
-     */
+    @Operation(summary = "Find staircase patterns", description = "Scan a list of symbols and return those exhibiting staircase patterns")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Patterns returned"),
+        @ApiResponse(responseCode = "400", description = "No symbols provided"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/find-staircase-patterns")
     public ResponseEntity<Map<String, Object>> findStaircasePatterns(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "symbols (list of tickers), source (optional)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -350,9 +384,11 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Get screener dashboard with all predefined queries
-     */
+    @Operation(summary = "Screener dashboard", description = "Run all predefined screener queries and return a combined dashboard")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Dashboard returned"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/screener/dashboard")
     public ResponseEntity<Map<String, Object>> getScreenerDashboard() {
         try {
@@ -364,11 +400,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Execute a specific screener query
-     */
+    @Operation(summary = "Execute screener query", description = "Run a single named predefined screener query")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Query result returned"),
+        @ApiResponse(responseCode = "400", description = "Query not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/screener/execute")
     public ResponseEntity<Map<String, Object>> executeScreenerQuery(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "queryName (string), source (optional)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -394,11 +434,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Execute multiple screener queries
-     */
+    @Operation(summary = "Execute multiple screener queries", description = "Run multiple named predefined screener queries in one request")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Combined results returned"),
+        @ApiResponse(responseCode = "400", description = "No valid queries found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/screener/execute-multiple")
     public ResponseEntity<Map<String, Object>> executeMultipleQueries(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "queryNames (list of strings)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -428,9 +472,8 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Get all predefined screener queries
-     */
+    @Operation(summary = "List predefined screener queries", description = "Returns all available predefined screener query names and metadata")
+    @ApiResponse(responseCode = "200", description = "Queries returned")
     @GetMapping("/screener/queries")
     public ResponseEntity<Map<String, Object>> getPredefinedQueries() {
         try {
@@ -445,11 +488,15 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Filter screener results
-     */
+    @Operation(summary = "Filter screener results", description = "Apply filter criteria to a provided list of stocks")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Filtered stocks returned"),
+        @ApiResponse(responseCode = "400", description = "No stocks data provided"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/screener/filter")
     public ResponseEntity<Map<String, Object>> filterScreenerResults(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "stocks (list of stock objects), filters (map of field → value)")
             @RequestBody Map<String, Object> request) {
         
         try {
@@ -494,9 +541,8 @@ public class BreakoutController {
         }
     }
 
-    /**
-     * Health check endpoint
-     */
+    @Operation(summary = "Health check", description = "Returns service health status")
+    @ApiResponse(responseCode = "200", description = "Service is up")
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         return ResponseEntity.ok(Map.of(
